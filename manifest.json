@@ -1,0 +1,15 @@
+{
+  "name": "Sayarak — Beslenme Takibi",
+  "short_name": "Sayarak",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f7f4ef",
+  "theme_color": "#f7f4ef",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='48' fill='%23e8dcc8'/%3E%3Ctext x='96' y='126' font-size='100' font-family='Georgia,serif' font-weight='bold' text-anchor='middle' fill='%235c4a32'%3E5%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
