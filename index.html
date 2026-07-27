@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Sayarak">
 <meta name="theme-color" content="#f7f4ef">
 <title>Sayarak — Beslenme Takibi</title>
+<link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23e8dcc8'/%3E%3Ctext x='90' y='118' font-size='86' font-family='Georgia,serif' font-weight='bold' text-anchor='middle' fill='%235c4a32'%3E5%3C/text%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -171,6 +172,7 @@ nav button i{font-size:20px;font-style:normal;line-height:1}
   transition:.25s;pointer-events:none;max-width:88vw;text-align:center}
 .toast.on{opacity:.96;transform:translateX(-50%) translateY(0)}
 </style>
+<base target="_blank">
 </head>
 <body>
 <header>
@@ -728,6 +730,11 @@ function wipe(){
 renderAll();
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden && day!==todayStr() && parseD(day)<parseD(todayStr())){ /* gün değişimini zorlama */ } });
 window.addEventListener('pageshow',()=>{ renderDate(); });
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
 </script>
 </body>
 </html>
