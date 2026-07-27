@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sayarak">
+<meta name="theme-color" content="#f7f4ef">
+<title>Sayarak — Beslenme Takibi</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23e8dcc8'/%3E%3Ctext x='90' y='118' font-size='86' font-family='Georgia,serif' font-weight='bold' text-anchor='middle' fill='%235c4a32'%3E5%3C/text%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f7f4ef; --card:#fffdfa; --ink:#2f2a24; --muted:#8a8078; --line:#e6ded2;
+  --tahil:#c9822e; --et:#b8503f; --sut:#4a7fa5; --meyve:#8a5fa8; --yag:#c2a12a; --sebze:#4e8f5a;
+  --ok:#4e8f5a; --warn:#c9822e; --over:#b8503f;
+  --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
+  font-size:16px;line-height:1.45;overscroll-behavior-y:none}
+body{padding-top:var(--safe-t);padding-bottom:calc(64px + var(--safe-b))}
+button,input,select{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer}
+.hidden{display:none!important}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:50;background:rgba(247,244,239,.92);
+  backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);
+  border-bottom:1px solid var(--line);padding:8px 14px 10px}
+.hrow{display:flex;align-items:center;gap:8px}
+.profiles{display:flex;background:#ece5da;border-radius:11px;padding:3px;flex:1;min-width:0}
+.profiles button{flex:1;padding:7px 4px;border-radius:8px;font-size:14px;font-weight:600;
+  color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s}
+.profiles button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.09)}
+.iconbtn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  font-size:19px;background:#ece5da;flex:none}
+.datebar{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:9px}
+.datebar b{font-size:15px;font-weight:600;min-width:170px;text-align:center}
+.datebar button{font-size:20px;color:var(--muted);padding:0 6px;line-height:1}
+.today-chip{font-size:11px;background:#ece5da;padding:2px 8px;border-radius:20px;color:var(--muted)}
+
+/* ---------- rings ---------- */
+.rings{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:12px 10px 4px}
+.ring{text-align:center}
+.ring svg{width:100%;max-width:56px;height:auto;display:block;margin:0 auto}
+.ring .lbl{font-size:10px;color:var(--muted);margin-top:1px;letter-spacing:.2px}
+.ring .val{font-size:12px;font-weight:700;margin-top:-1px}
+
+/* ---------- bars ---------- */
+.bars{padding:6px 14px 4px;display:flex;flex-direction:column;gap:9px}
+.bar-row{display:flex;align-items:center;gap:9px}
+.bar-name{width:52px;font-size:12.5px;font-weight:600;flex:none}
+.track{flex:1;height:11px;background:#ece5da;border-radius:6px;overflow:hidden;position:relative}
+.fill{height:100%;border-radius:6px;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.fill.over{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 5px,transparent 5px 10px)}
+.bar-num{width:56px;text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;flex:none;font-weight:600}
+.bar-num small{color:var(--muted);font-weight:400}
+
+/* ---------- generic ---------- */
+main{padding:6px 14px 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:11px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:18px 4px 8px;font-weight:600}
+h2:first-child{margin-top:4px}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 12px;line-height:1.6}
+
+/* ---------- meal sections ---------- */
+.meal{margin-bottom:13px}
+.meal-head{display:flex;align-items:center;gap:8px;margin:0 4px 6px}
+.meal-head h3{font-size:14px;margin:0;font-weight:700;flex:1}
+.meal-head .sum{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.meal-head .add{width:27px;height:27px;border-radius:8px;background:#ece5da;display:grid;
+  place-items:center;font-size:17px;color:var(--muted);flex:none}
+.entry{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 11px;
+  margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.entry-main{flex:1;min-width:0}
+.entry-name{font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry-sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+.pills{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
+.pill{font-size:10px;padding:1px 6px;border-radius:20px;color:#fff;font-weight:600;letter-spacing:.2px}
+.qty{display:flex;align-items:center;gap:2px;flex:none}
+.qty button{width:26px;height:26px;border-radius:7px;background:#ece5da;font-size:15px;
+  display:grid;place-items:center;color:var(--muted)}
+.qty span{min-width:30px;text-align:center;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.del{color:#b8503f;font-size:16px;padding:4px 2px;flex:none}
+
+/* ---------- sheet ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(20,16,12,.45);z-index:90;opacity:0;
+  pointer-events:none;transition:opacity .22s}
+.backdrop.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--bg);
+  border-radius:20px 20px 0 0;max-height:92vh;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1);
+  padding-bottom:var(--safe-b);box-shadow:0 -6px 30px rgba(0,0,0,.18)}
+.sheet.on{transform:translateY(0)}
+.grab{width:36px;height:4px;background:var(--line);border-radius:3px;margin:8px auto 2px;flex:none}
+.sheet-head{display:flex;align-items:center;gap:10px;padding:6px 14px 10px;flex:none}
+.sheet-head h3{flex:1;margin:0;font-size:17px;font-weight:700}
+.sheet-head .close{font-size:15px;color:var(--muted);padding:4px 8px;font-weight:600}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 18px;flex:1}
+
+.search{display:flex;gap:8px;padding:0 14px 9px;flex:none}
+.search input{flex:1;padding:11px 13px;border:1px solid var(--line);border-radius:11px;
+  background:var(--card);font-size:16px;outline:none}
+.search input:focus{border-color:#c8b9a3}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:0 14px 10px;flex:none;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:6px 13px;border-radius:20px;background:#ece5da;font-size:13px;
+  white-space:nowrap;color:var(--muted);font-weight:600}
+.tabs button.on{background:var(--ink);color:#fff}
+
+.fitem{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;margin-bottom:6px}
+.fitem .fm{flex:1;min-width:0}
+.fitem .fn{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.fitem .fo{font-size:11.5px;color:var(--muted);margin-top:1px}
+.src{font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700;letter-spacing:.3px;flex:none}
+.src.hoca{background:#dfeadf;color:#37633f}
+.src.dergi{background:#e6e0ef;color:#5d4a76}
+.src.ek{background:#eee6d8;color:#7a6440}
+.src.ozel{background:#dce7ef;color:#3a5f7a}
+.warnico{font-size:12px}
+.plus{width:32px;height:32px;border-radius:9px;background:var(--ink);color:#fff;
+  display:grid;place-items:center;font-size:19px;flex:none}
+
+/* ---------- forms ---------- */
+label.f{display:block;margin-bottom:11px}
+label.f span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px;font-weight:600}
+label.f input,label.f select{width:100%;padding:10px 12px;border:1px solid var(--line);
+  border-radius:10px;background:var(--card);font-size:16px;outline:none}
+.grid5{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid5 label.f{margin-bottom:0}
+.grid5 input{text-align:center;padding:9px 4px}
+.btn{display:block;width:100%;padding:13px;border-radius:12px;background:var(--ink);color:#fff;
+  font-size:15.5px;font-weight:700;text-align:center;margin-top:6px}
+.btn.ghost{background:#ece5da;color:var(--ink)}
+.btn.danger{background:#f0dcd8;color:#a03f30}
+.btn.sm{padding:10px;font-size:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 2px}
+.warnbox{background:#fdf3e3;border:1px solid #edd9b4;border-radius:10px;padding:9px 11px;
+  font-size:12.5px;color:#7a5a20;margin:8px 0;line-height:1.5}
+
+/* ---------- history / stats ---------- */
+.hday{display:flex;align-items:center;gap:9px;padding:10px 11px;background:var(--card);
+  border:1px solid var(--line);border-radius:11px;margin-bottom:5px}
+.hday .hd{flex:1;font-size:13.5px;font-weight:600}
+.hmini{display:flex;gap:3px}
+.hmini i{width:7px;height:22px;border-radius:2px;display:block;opacity:.28}
+.hmini i.f{opacity:1}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-top:4px}
+.wk div{font-size:10px;color:var(--muted)}
+.wk b{display:block;font-size:13px;color:var(--ink);margin-top:2px}
+
+/* ---------- nav ---------- */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(247,244,239,.94);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:var(--safe-b)}
+nav button{padding:8px 0 7px;font-size:10.5px;color:var(--muted);display:flex;
+  flex-direction:column;align-items:center;gap:2px;font-weight:600}
+nav button.on{color:var(--ink)}
+nav button i{font-size:20px;font-style:normal;line-height:1}
+
+.fab{position:fixed;right:16px;bottom:calc(74px + var(--safe-b));z-index:55;width:56px;height:56px;
+  border-radius:18px;background:var(--ink);color:#fff;font-size:29px;display:grid;place-items:center;
+  box-shadow:0 6px 20px rgba(47,42,36,.32)}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
+  bottom:calc(84px + var(--safe-b));z-index:200;background:var(--ink);color:#fff;
+  padding:10px 18px;border-radius:22px;font-size:13.5px;font-weight:600;opacity:0;
+  transition:.25s;pointer-events:none;max-width:88vw;text-align:center}
+.toast.on{opacity:.96;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="profiles" id="profTabs"></div>
+    <button class="iconbtn" onclick="openSheet('sAdd')">＋</button>
+  </div>
+  <div class="datebar">
+    <button onclick="shiftDay(-1)">‹</button>
+    <b id="dateLbl"></b>
+    <button onclick="shiftDay(1)">›</button>
+  </div>
+</header>
+
+<!-- ============ GÜN ============ -->
+<div id="vDay">
+  <div class="rings" id="rings"></div>
+  <div class="bars" id="bars"></div>
+  <main id="meals"></main>
+</div>
+
+<!-- ============ GEÇMİŞ ============ -->
+<div id="vHist" class="hidden"><main>
+  <h2>Bu hafta</h2>
+  <div class="card" id="weekCard"></div>
+  <h2>Son 30 gün</h2>
+  <div id="histList"></div>
+</main></div>
+
+<!-- ============ BESİNLER ============ -->
+<div id="vFoods" class="hidden"><main>
+  <div class="search" style="padding-left:0;padding-right:0">
+    <input id="fdbSearch" placeholder="Besin ara…" oninput="renderFoodDb()">
+  </div>
+  <div class="tabs" id="fdbTabs" style="padding-left:0;padding-right:0"></div>
+  <button class="btn ghost sm" onclick="newFood()" style="margin-bottom:12px">＋ Yeni besin ekle</button>
+  <div id="fdbList"></div>
+</main></div>
+
+<!-- ============ AYARLAR ============ -->
+<div id="vSet" class="hidden"><main>
+  <h2>Profiller</h2>
+  <div id="setProfiles"></div>
+  <h2>Öğün başlıkları</h2>
+  <div class="card"><div id="mealNames"></div>
+    <button class="btn ghost sm" onclick="addMeal()">＋ Öğün ekle</button></div>
+  <h2>Veri</h2>
+  <div class="card">
+    <button class="btn ghost sm" onclick="doExport()">⤓ Yedek al (JSON)</button>
+    <div style="height:8px"></div>
+    <button class="btn ghost sm" onclick="document.getElementById('impFile').click()">⤒ Yedekten yükle</button>
+    <input type="file" id="impFile" accept=".json" class="hidden" onchange="doImport(this)">
+    <div style="height:8px"></div>
+    <button class="btn danger sm" onclick="wipe()">Tüm verileri sil</button>
+    <p class="note">Veriler yalnızca bu telefonda saklanır; hiçbir sunucuya gönderilmez.
+      Safari nadiren depolamayı temizleyebildiği için ayda bir yedek almanı öneririm.</p>
+  </div>
+  <h2>Kaynaklar</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0">
+      <span class="src hoca">HOCA</span> Ayça Kaya'dan aldığın numaralandırma listesi ve besin piramidi notu.<br><br>
+      <span class="src dergi">DERGİ</span> Formsanté, Ocak 2014 — Dr. Ayça Kaya röportajı (Yaprak Çetinkaya).
+      Kitaptan aktarılan birim tablosu.<br><br>
+      <span class="src ek">EK</span> Sistemde sayılmayan çiğ sebzeler. Ayça Kaya çiğ sebzeyi formüle dahil
+      etmiyor; burada <b>hedef</b> olarak takip ediliyor, hakkını doldurmak iyi.
+      Yağ eklenmiş sebze yemeği ise 1 yağ birimi sayılır.<br><br>
+      <span class="src ozel">ÖZEL</span> Senin eklediğin besinler.
+    </p>
+    <div class="warnbox">
+      ⚠️ İki kaynak bazı besinlerde çelişiyor (badem, yoğurt, mantı, pasta, dondurma…).
+      Uygulama <b>hocanın değerini</b> kullanıyor; dergi değeri o besinin yanında not olarak duruyor.
+      Emin olmadığın bir kalem varsa hocana sor ve buradan düzelt.
+    </div>
+    <p class="note">Bu uygulama tıbbi tavsiye vermez; yalnızca hekiminin verdiği programı takip etmeni kolaylaştırır.</p>
+  </div>
+  <p class="note" style="text-align:center;opacity:.6">Sayarak · v1.0</p>
+</main></div>
+
+<button class="fab" id="fab" onclick="openSheet('sAdd')">＋</button>
+
+<nav>
+  <button id="nDay"   class="on" onclick="go('Day')"><i>◉</i>Gün</button>
+  <button id="nHist"  onclick="go('Hist')"><i>▤</i>Geçmiş</button>
+  <button id="nFoods" onclick="go('Foods')"><i>☰</i>Besinler</button>
+  <button id="nSet"   onclick="go('Set')"><i>⚙</i>Ayarlar</button>
+</nav>
+
+<div class="backdrop" id="backdrop" onclick="closeSheet()"></div>
+
+<!-- besin ekleme sheet -->
+<div class="sheet" id="sAdd">
+  <div class="grab"></div>
+  <div class="sheet-head"><h3 id="addTitle">Besin ekle</h3>
+    <button class="close" onclick="closeSheet()">Kapat</button></div>
+  <div class="search"><input id="q" placeholder="Ara: ekmek, yoğurt, mantı…" oninput="renderPicker()"></div>
+  <div class="tabs" id="pickTabs"></div>
+  <div class="sheet-body" id="pickList"></div>
+</div>
+
+<!-- genel form sheet -->
+<div class="sheet" id="sForm">
+  <div class="grab"></div>
+  <div class="sheet-head"><h3 id="formTitle">Düzenle</h3>
+    <button class="close" onclick="closeSheet()">Kapat</button></div>
+  <div class="sheet-body" id="formBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<style>
+.rings{grid-template-columns:repeat(3,1fr);gap:2px;padding:12px 12px 6px}
+.ring svg{max-width:78px}
+.ring .lbl{font-size:11px;font-weight:600;margin-top:2px}
+.ring .val{font-size:11px;color:var(--muted);font-weight:600}
+</style>
+<script>
+"use strict";
+/* ══════════════ VERİ ══════════════ */
+const FOODS = [{"ad":"Ekmek","grup":"Tahıl","olcu":"1 adet / 25 gr","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b1","kaynak":"hoca"},{"ad":"Hamburger Ekmeği","grup":"Tahıl","olcu":"1/2 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b2","kaynak":"hoca"},{"ad":"Sandwich Ekmeği","grup":"Tahıl","olcu":"1/3 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b3","kaynak":"hoca"},{"ad":"Lavaş","grup":"Tahıl","olcu":"1/4 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b4","kaynak":"hoca"},{"ad":"Tam Tahıllı Gevrekler","grup":"Tahıl","olcu":"3 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b5","kaynak":"hoca"},{"ad":"Grissini","grup":"Tahıl","olcu":"3 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b6","kaynak":"hoca"},{"ad":"Galeta","grup":"Tahıl","olcu":"2 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b7","kaynak":"hoca"},{"ad":"Diyet Bisküvi","grup":"Tahıl","olcu":"4 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b8","kaynak":"hoca"},{"ad":"Tuzlu Bisküvi","grup":"Tahıl","olcu":"2 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b9","kaynak":"hoca"},{"ad":"Leblebi","grup":"Tahıl","olcu":"1 bardak","p":{"tahil":2,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b10","kaynak":"hoca"},{"ad":"Çorba","grup":"Tahıl","olcu":"1 kepçe, az yağlı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b11","kaynak":"hoca"},{"ad":"Sigara Böreği","grup":"Tahıl","olcu":"1 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b12","kaynak":"hoca"},{"ad":"Simit","grup":"Tahıl","olcu":"1/4 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b13","kaynak":"hoca"},{"ad":"Kuru Baklagil","grup":"Tahıl","olcu":"4 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b14","kaynak":"hoca"},{"ad":"Mısır","grup":"Tahıl","olcu":"1 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b15","kaynak":"hoca"},{"ad":"Patates","grup":"Tahıl","olcu":"1 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b16","kaynak":"hoca"},{"ad":"Patates Püresi","grup":"Tahıl","olcu":"4 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b17","kaynak":"hoca","cakisma":"Dergi kaynağı: 2 yemek kaşığı = 1 tahıl"},{"ad":"Patlamış Mısır","grup":"Tahıl","olcu":"1 bardak","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b18","kaynak":"hoca"},{"ad":"Pilav","grup":"Tahıl","olcu":"2 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b19","kaynak":"hoca"},{"ad":"Makarna","grup":"Tahıl","olcu":"3 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b20","kaynak":"hoca"},{"ad":"Krep","grup":"Tahıl","olcu":"1 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b21","kaynak":"hoca"},{"ad":"Karabuğday Patlağı","grup":"Tahıl","olcu":"3 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b22","kaynak":"hoca"},{"ad":"Pankek","grup":"Tahıl","olcu":"1 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b23","kaynak":"hoca"},{"ad":"Kestane","grup":"Tahıl","olcu":"3 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b24","kaynak":"hoca"},{"ad":"Et","grup":"Et","olcu":"1 avuç içi (K) / 2 avuç içi (E) · ~50 gr","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b25","kaynak":"hoca"},{"ad":"Yumurta","grup":"Et","olcu":"1 adet","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b26","kaynak":"hoca"},{"ad":"Peynir","grup":"Et","olcu":"1 kibrit kutusu, az yağlı","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b27","kaynak":"hoca"},{"ad":"Balık","grup":"Et","olcu":"1 el boyutunda ızgara","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"veya 8-10 adet küçük balık","id":"b28","kaynak":"hoca"},{"ad":"Tavuk","grup":"Et","olcu":"1 avuç içi (K) / 2 avuç içi (E)","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"1 avuç içi büyüklüğünde","id":"b29","kaynak":"hoca"},{"ad":"Tavuk Baget","grup":"Et","olcu":"2 adet","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b30","kaynak":"hoca"},{"ad":"Hindi Füme","grup":"Et","olcu":"2 adet","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b31","kaynak":"hoca"},{"ad":"Şeftali","grup":"Meyve","olcu":"1 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b32","kaynak":"hoca"},{"ad":"Elma","grup":"Meyve","olcu":"1 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b33","kaynak":"hoca"},{"ad":"Portakal","grup":"Meyve","olcu":"1 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b34","kaynak":"hoca"},{"ad":"Muz","grup":"Meyve","olcu":"1 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b35","kaynak":"hoca"},{"ad":"Çilek","grup":"Meyve","olcu":"8 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b36","kaynak":"hoca"},{"ad":"Kuru Üzüm","grup":"Meyve","olcu":"16 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b37","kaynak":"hoca","cakisma":"Dergi kaynağı: 15-17 adet = 1 meyve (uyumlu)"},{"ad":"Kiraz","grup":"Meyve","olcu":"12 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b38","kaynak":"hoca"},{"ad":"Mandalina","grup":"Meyve","olcu":"1 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b39","kaynak":"hoca"},{"ad":"Hurma","grup":"Meyve","olcu":"3 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b40","kaynak":"hoca"},{"ad":"Meyve Salatası","grup":"Meyve","olcu":"1 küçük kase","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b41","kaynak":"hoca"},{"ad":"Kayısı","grup":"Meyve","olcu":"3 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b42","kaynak":"hoca"},{"ad":"Erik","grup":"Meyve","olcu":"15 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b43","kaynak":"hoca","cakisma":"Dergi kaynağı: 6-8 yeşil erik = 1 meyve"},{"ad":"Üzüm","grup":"Meyve","olcu":"20 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"1 salkım, 20 taneli","id":"b44","kaynak":"hoca"},{"ad":"Nar Ekşisi","grup":"Meyve","olcu":"1 yemek kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b45","kaynak":"hoca"},{"ad":"Bal","grup":"Meyve","olcu":"1 yemek kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b46","kaynak":"hoca"},{"ad":"Reçel","grup":"Meyve","olcu":"1 yemek kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b47","kaynak":"hoca"},{"ad":"Pekmez","grup":"Meyve","olcu":"1 yemek kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b48","kaynak":"hoca"},{"ad":"İncir","grup":"Meyve","olcu":"2 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","id":"b49","kaynak":"hoca"},{"ad":"Süt","grup":"Süt","olcu":"1 bardak","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b50","kaynak":"hoca"},{"ad":"Ayran","grup":"Süt","olcu":"1 bardak","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b51","kaynak":"hoca"},{"ad":"Yoğurt","grup":"Süt","olcu":"4 yemek kaşığı","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b52","kaynak":"hoca","cakisma":"Dergi kaynağı: 1 su bardağı = 1 süt"},{"ad":"Kefir","grup":"Süt","olcu":"1 bardak","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b53","kaynak":"hoca"},{"ad":"Sıvı Yağ","grup":"Yağ","olcu":"1 tatlı kaşığı / 5 gr","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b54","kaynak":"hoca"},{"ad":"Zeytin","grup":"Yağ","olcu":"5 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b55","kaynak":"hoca"},{"ad":"Badem","grup":"Yağ","olcu":"8 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b56","kaynak":"hoca","cakisma":"Dergi kaynağı: 5 kavrulmuş veya 10 çiğ badem = 1 yağ"},{"ad":"Tereyağı","grup":"Yağ","olcu":"1 tatlı kaşığı / 5 gr","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b57","kaynak":"hoca"},{"ad":"Fıstık","grup":"Yağ","olcu":"8 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b58","kaynak":"hoca","cakisma":"Dergi kaynağı: 5 adet = 1 yağ"},{"ad":"Ceviz","grup":"Yağ","olcu":"3 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b59","kaynak":"hoca"},{"ad":"Fındık","grup":"Yağ","olcu":"8 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b60","kaynak":"hoca","cakisma":"Dergi kaynağı: 5 kavrulmuş veya 10 çiğ fındık = 1 yağ"},{"ad":"Dondurma","grup":"Karma","olcu":"2 top","p":{"tahil":2,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b61","kaynak":"hoca","cakisma":"Dergi kaynağı: 2 top = 1 tahıl + 1 süt"},{"ad":"Sütlü Tatlı","grup":"Karma","olcu":"1 küçük kase","p":{"tahil":2,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"1 küçük kase","id":"b62","kaynak":"hoca"},{"ad":"Paket Dondurma","grup":"Karma","olcu":"1 adet","p":{"tahil":4,"et":0,"sut":0,"meyve":0,"yag":3,"sebze":0},"not":"","id":"b63","kaynak":"hoca"},{"ad":"Pasta","grup":"Karma","olcu":"1 dilim","p":{"tahil":4,"et":0,"sut":0,"meyve":0,"yag":4,"sebze":0},"not":"","id":"b64","kaynak":"hoca","cakisma":"Dergi kaynağı: 1 dilim = 4 tahıl + 2 yağ"},{"ad":"Bitter Çikolata","grup":"Karma","olcu":"1 küçük kare/parça","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b65","kaynak":"hoca"},{"ad":"Yaprak Sarma","grup":"Karma","olcu":"5 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b66","kaynak":"hoca","cakisma":"Dergi kaynağı: 4 adet = 1 tahıl + 1 yağ"},{"ad":"Mercimek Köftesi","grup":"Karma","olcu":"4 adet","p":{"tahil":1,"et":1,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b67","kaynak":"hoca"},{"ad":"Su Böreği","grup":"Karma","olcu":"1 dilim","p":{"tahil":4,"et":0,"sut":0,"meyve":0,"yag":4,"sebze":0},"not":"","id":"b68","kaynak":"hoca"},{"ad":"Poğaça","grup":"Karma","olcu":"1 adet","p":{"tahil":3,"et":0,"sut":0,"meyve":0,"yag":3,"sebze":0},"not":"","id":"b69","kaynak":"hoca"},{"ad":"Biber Dolması (etli)","grup":"Karma","olcu":"2 adet","p":{"tahil":1,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b70","kaynak":"hoca"},{"ad":"İçli Köfte (haşlanmış)","grup":"Karma","olcu":"3 adet","p":{"tahil":2,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b71","kaynak":"hoca"},{"ad":"Çiğköfte","grup":"Karma","olcu":"4 adet","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b72","kaynak":"hoca"},{"ad":"sushi","grup":"Karma","olcu":"4 adet","p":{"tahil":1,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b73","kaynak":"hoca"},{"ad":"Mantı","grup":"Karma","olcu":"2 yemek kaşığı","p":{"tahil":2,"et":1,"sut":1,"meyve":0,"yag":1,"sebze":0},"not":"","id":"b74","kaynak":"hoca","cakisma":"Dergi kaynağı: 4 yemek kaşığı = 2 tahıl + 1 et + 1 süt + 2 yağ"},{"ad":"Sütlü Kahve","grup":"Karma","olcu":"1 fincan","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b75","kaynak":"hoca"},{"ad":"Kuru Fasulye","grup":"Karma","olcu":"5-6 yemek kaşığı","p":{"tahil":1,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b76","kaynak":"hoca"},{"ad":"Aşure","grup":"Karma","olcu":"1 kase","p":{"tahil":3,"et":0,"sut":0,"meyve":1,"yag":1,"sebze":0},"not":"","id":"b77","kaynak":"hoca"},{"ad":"Köfte","grup":"Karma","olcu":"5 adet küçük","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b78","kaynak":"hoca"},{"ad":"Menemen","grup":"Karma","olcu":"4 yemek kaşığı","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b79","kaynak":"hoca"},{"ad":"Kuruyemiş","grup":"Karma","olcu":"1 küçük avuç","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"Karışık çerez; badem/fındık birimiyle eş","id":"b80","kaynak":"hoca"},{"ad":"Karnıyarık","grup":"Karma","olcu":"1 adet","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Yağını da sayman gerekebilir","id":"b81","kaynak":"hoca"},{"ad":"Yoğurtlu Semizotu","grup":"Karma","olcu":"1 küçük kase","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b82","kaynak":"hoca"},{"ad":"Kremalı Kahve","grup":"Karma","olcu":"1 bardak","p":{"tahil":4,"et":0,"sut":0,"meyve":0,"yag":4,"sebze":0},"not":"","id":"b83","kaynak":"hoca"},{"ad":"Meyve Suyu","grup":"Karma","olcu":"1 bardak","p":{"tahil":4,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b84","kaynak":"hoca"},{"ad":"Limonata","grup":"Karma","olcu":"1 su bardağı","p":{"tahil":4,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b85","kaynak":"hoca"},{"ad":"Gazlı İçecek","grup":"Karma","olcu":"1 kutu / 330 ml","p":{"tahil":4,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","id":"b86","kaynak":"hoca"},{"ad":"Salata","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b87","kaynak":"ek"},{"ad":"Çiğ Sebze","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b88","kaynak":"ek"},{"ad":"Haşlanmış Sebze","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b89","kaynak":"ek"},{"ad":"Zeytinyağlı Sebze Yemeği","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":1},"not":"Yağla pişmiş sebze 1 yağ birimi sayılır","id":"b90","kaynak":"ek"},{"ad":"Domates","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b91","kaynak":"ek"},{"ad":"Salatalık","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b92","kaynak":"ek"},{"ad":"Marul","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b93","kaynak":"ek"},{"ad":"Roka","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b94","kaynak":"ek"},{"ad":"Ispanak","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b95","kaynak":"ek"},{"ad":"Brokoli","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b96","kaynak":"ek"},{"ad":"Kabak","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b97","kaynak":"ek"},{"ad":"Patlıcan","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b98","kaynak":"ek"},{"ad":"Biber","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b99","kaynak":"ek"},{"ad":"Havuç","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b100","kaynak":"ek"},{"ad":"Karnabahar","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b101","kaynak":"ek"},{"ad":"Semizotu","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b102","kaynak":"ek"},{"ad":"Pancar","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b103","kaynak":"ek"},{"ad":"Kereviz","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b104","kaynak":"ek"},{"ad":"Çorba (Sebze)","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b105","kaynak":"ek"},{"ad":"Turşu","grup":"Sebze","olcu":"1 yumruk (K) / 2 yumruk (E)","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":1},"not":"","id":"b106","kaynak":"ek"},{"ad":"Lahmacun","grup":"Karma","olcu":"1 adet","p":{"tahil":2,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Ayça Kaya'nın röportajdaki kendi örneği: 2 dilim ekmek + 1 et","kaynak":"dergi","id":"b107"},{"ad":"Börek (ince dilim)","grup":"Tahıl","olcu":"1 ince dilim","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b108"},{"ad":"Yufka","grup":"Tahıl","olcu":"1/8 yufka","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b109"},{"ad":"Müsli","grup":"Tahıl","olcu":"3 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Tam tahıllı gevrek ile aynı birim","kaynak":"dergi","id":"b110"},{"ad":"Yulaf","grup":"Tahıl","olcu":"3 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Gevrek grubuyla eş kabul edildi","kaynak":"dergi","id":"b111"},{"ad":"Bulgur Pilavı","grup":"Tahıl","olcu":"2 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Pilav birimiyle aynı","kaynak":"dergi","id":"b112"},{"ad":"Bira (33 cl)","grup":"Karma","olcu":"1 şişe","p":{"tahil":2,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b113"},{"ad":"Şarap","grup":"Karma","olcu":"1 kadeh","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","kaynak":"dergi","id":"b114"},{"ad":"Karpuz","grup":"Meyve","olcu":"1/8 dilim","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b115"},{"ad":"Kavun","grup":"Meyve","olcu":"1/8 dilim","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b116"},{"ad":"Ananas","grup":"Meyve","olcu":"1 dilim","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b117"},{"ad":"Armut","grup":"Meyve","olcu":"1 orta boy","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"Örnek menülerde 1/2 armut ara öğün olarak geçiyor","kaynak":"dergi","id":"b118"},{"ad":"Kivi","grup":"Meyve","olcu":"1 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"Örnek menüden","kaynak":"dergi","id":"b119"},{"ad":"Ayva","grup":"Meyve","olcu":"1/2 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"Örnek menüden","kaynak":"dergi","id":"b120"},{"ad":"Kuru Kayısı","grup":"Meyve","olcu":"3 adet","p":{"tahil":0,"et":0,"sut":0,"meyve":1,"yag":0,"sebze":0},"not":"Taze kayısı ile aynı birim","kaynak":"dergi","id":"b121"},{"ad":"Mayonez","grup":"Yağ","olcu":"1 tatlı kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","kaynak":"dergi","id":"b122"},{"ad":"Margarin","grup":"Yağ","olcu":"1 tatlı kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"","kaynak":"dergi","id":"b123"},{"ad":"Keten Tohumu","grup":"Yağ","olcu":"1 tatlı kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"Örnek tarifte geçiyor; yağlı tohum kabul edildi","kaynak":"dergi","id":"b124"},{"ad":"Lor Peyniri","grup":"Et","olcu":"2 yemek kaşığı","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Az yağlı peynir birimiyle eş","kaynak":"dergi","id":"b125"},{"ad":"Omlet (1 yumurta)","grup":"Karma","olcu":"1 porsiyon","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":1,"sebze":0},"not":"Yumurta 1 et + pişirme yağı 1 yağ","kaynak":"dergi","id":"b126"},{"ad":"Tost (yağsız, kepekli)","grup":"Karma","olcu":"1 adet","p":{"tahil":2,"et":1,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"2 dilim ekmek + 1 dilim peynir","kaynak":"dergi","id":"b127"},{"ad":"Cacık","grup":"Süt","olcu":"1 kase","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"Yoğurt birimiyle eş","kaynak":"dergi","id":"b128"},{"ad":"Probiyotik Yoğurt","grup":"Süt","olcu":"1 kutu","p":{"tahil":0,"et":0,"sut":1,"meyve":0,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b129"},{"ad":"Tarhana Çorbası","grup":"Tahıl","olcu":"1 kepçe","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Az yağlı çorba birimi","kaynak":"dergi","id":"b130"},{"ad":"Mercimek Çorbası","grup":"Tahıl","olcu":"1 kepçe","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"Az yağlı çorba birimi","kaynak":"dergi","id":"b131"},{"ad":"Zeytinyağlı Sebze Yemeği (etsiz)","grup":"Karma","olcu":"4-5 yemek kaşığı","p":{"tahil":0,"et":0,"sut":0,"meyve":0,"yag":1,"sebze":1},"not":"Ayça Kaya: etsiz ama yağ eklenmiş sebze yemeğinin 1 porsiyonu = 1 yağ","kaynak":"dergi","id":"b132"},{"ad":"Kıymalı Sebze Yemeği","grup":"Karma","olcu":"5 yemek kaşığı","p":{"tahil":0,"et":1,"sut":0,"meyve":0,"yag":1,"sebze":1},"not":"Örnek menüden çıkarım","kaynak":"dergi","id":"b133"},{"ad":"Nohut / Kuru Baklagil Yemeği","grup":"Tahıl","olcu":"4 yemek kaşığı","p":{"tahil":1,"et":0,"sut":0,"meyve":0,"yag":0,"sebze":0},"not":"","kaynak":"dergi","id":"b134"}];
+const GROUPS = [
+  {k:'tahil', n:'Tahıl',  c:'var(--tahil)'},
+  {k:'et',    n:'Et',     c:'var(--et)'},
+  {k:'sut',   n:'Süt',    c:'var(--sut)'},
+  {k:'meyve', n:'Meyve',  c:'var(--meyve)'},
+  {k:'yag',   n:'Yağ',    c:'var(--yag)'},
+  {k:'sebze', n:'Sebze',  c:'var(--sebze)', goal:true}
+];
+const KEYS = GROUPS.map(g=>g.k);
+const CATS = ['Tümü','Tahıl','Et','Süt','Meyve','Yağ','Sebze','Karma','Sık'];
+const LS = 'sayarak_v1';
+
+const DEFAULTS = {
+  profiles:[
+    {id:'p1', ad:'Cüneyt', limits:{tahil:8,et:4,sut:3,meyve:4,yag:3,sebze:4}},
+    {id:'p2', ad:'Eşim',   limits:{tahil:5,et:3,sut:3,meyve:3,yag:3,sebze:4}}
+  ],
+  active:'p1',
+  meals:['Kahvaltı','Ara Öğün','Öğle','İkindi','Akşam','Gece'],
+  custom:[], hidden:[], overrides:{}, log:{}, freq:{}
+};
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+let S = load(), day = todayStr(), pickMeal = null, pickCat='Tümü', fdbCat='Tümü';
+
+function load(){
+  try{
+    const r = JSON.parse(localStorage.getItem(LS));
+    if(!r) return clone(DEFAULTS);
+    return Object.assign(clone(DEFAULTS), r);
+  }catch(e){ return clone(DEFAULTS); }
+}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){ toast('Kaydedilemedi — depolama dolu olabilir'); } }
+
+/* ══════════════ YARDIMCI ══════════════ */
+function todayStr(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+const AY=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const GUN=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const GUN2=['Pz','Pt','Sa','Ça','Pe','Cu','Ct'];
+function dateLabel(s){
+  const d=parseD(s), t=todayStr();
+  if(s===t) return 'Bugün · '+d.getDate()+' '+AY[d.getMonth()];
+  const y=new Date(); y.setDate(y.getDate()-1);
+  if(s===todayStr(y)) return 'Dün · '+d.getDate()+' '+AY[d.getMonth()];
+  return GUN[d.getDay()]+' · '+d.getDate()+' '+AY[d.getMonth()];
+}
+function fmt(n){
+  n=Math.round(n*100)/100;
+  if(Number.isInteger(n)) return String(n);
+  if(Math.abs(n*2-Math.round(n*2))<.001) return (n<0?'-':'')+(Math.abs(n)<1?'½':Math.floor(Math.abs(n))+'½');
+  return String(n);
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let tT; function toast(m){ const e=document.getElementById('toast'); e.textContent=m; e.classList.add('on'); clearTimeout(tT); tT=setTimeout(()=>e.classList.remove('on'),1900); }
+function haptic(){ if(navigator.vibrate) navigator.vibrate(8); }
+
+function prof(){ return S.profiles.find(p=>p.id===S.active) || S.profiles[0]; }
+function logKey(pid,d){ return pid+'|'+d; }
+function entries(){ return S.log[logKey(S.active,day)] || []; }
+function setEntries(a){
+  const k=logKey(S.active,day);
+  if(a.length) S.log[k]=a; else delete S.log[k];
+  save();
+}
+
+/* besin havuzu */
+function allFoods(){
+  const out=[];
+  for(const f of FOODS){
+    if(S.hidden.includes(f.id)) continue;
+    out.push(S.overrides[f.id] ? Object.assign({},f,S.overrides[f.id]) : f);
+  }
+  return out.concat(S.custom);
+}
+function findFood(id){ return allFoods().find(f=>f.id===id); }
+
+/* ══════════════ TOPLAMLAR ══════════════ */
+function totals(list){
+  const t={}; KEYS.forEach(k=>t[k]=0);
+  (list||entries()).forEach(e=>KEYS.forEach(k=>t[k]+=(e.p[k]||0)*e.qty));
+  return t;
+}
+
+/* ══════════════ RENDER ══════════════ */
+function renderAll(){ renderProfiles(); renderDate(); renderRings(); renderMeals(); }
+
+function renderProfiles(){
+  document.getElementById('profTabs').innerHTML = S.profiles.map(p=>
+    `<button class="${p.id===S.active?'on':''}" onclick="switchProf('${p.id}')">${esc(p.ad)}</button>`).join('');
+}
+function switchProf(id){ S.active=id; save(); renderAll(); haptic(); }
+function renderDate(){ document.getElementById('dateLbl').textContent = dateLabel(day); }
+function shiftDay(n){
+  const d=parseD(day); d.setDate(d.getDate()+n);
+  if(todayStr(d) > todayStr()) { toast('Gelecek güne geçemezsin'); return; }
+  day=todayStr(d); renderDate(); renderRings(); renderMeals();
+}
+
+function renderRings(){
+  const t=totals(), L=prof().limits;
+  document.getElementById('rings').innerHTML = GROUPS.map(g=>{
+    const used=t[g.k], lim=L[g.k]||0;
+    const pct = lim>0 ? Math.min(used/lim,1) : 0;
+    const over = !g.goal && used>lim+.001;
+    const done = g.goal && used>=lim-.001;
+    const R=26, C=2*Math.PI*R;
+    const col = over ? 'var(--over)' : g.c;
+    const remain = lim-used;
+    const center = g.goal
+      ? (done ? '✓' : fmt(Math.max(remain,0)))
+      : fmt(remain);
+    const csize = String(center).length>2 ? 15 : 19;
+    return `<div class="ring">
+      <svg viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="${R}" fill="none" stroke="#ece5da" stroke-width="7"/>
+        <circle cx="32" cy="32" r="${R}" fill="none" stroke="${col}" stroke-width="7"
+          stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}"
+          transform="rotate(-90 32 32)" style="transition:stroke-dashoffset .4s"/>
+        ${over?`<circle cx="32" cy="32" r="${R}" fill="none" stroke="var(--over)" stroke-width="7"
+          stroke-linecap="round" stroke-dasharray="4 8" opacity=".55" transform="rotate(-90 32 32)"/>`:''}
+        <text x="32" y="32" text-anchor="middle" dominant-baseline="central"
+          font-size="${csize}" font-weight="700" fill="${over?'var(--over)':'var(--ink)'}"
+          font-family="-apple-system,system-ui,sans-serif">${center}</text>
+      </svg>
+      <div class="lbl">${g.n}${g.goal?' ▲':''}</div>
+      <div class="val" style="${over?'color:var(--over)':''}">${fmt(used)} / ${fmt(lim)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('bars').innerHTML='';
+}
+
+function pillsFor(p){
+  return GROUPS.filter(g=>(p[g.k]||0)>0)
+    .map(g=>`<span class="pill" style="background:${g.c}">${g.n} ${fmt(p[g.k])}</span>`).join('');
+}
+
+function renderMeals(){
+  const es=entries();
+  const html = S.meals.map((m,i)=>{
+    const items = es.map((e,idx)=>({e,idx})).filter(x=>x.e.meal===i);
+    const st = totals(items.map(x=>x.e));
+    const sum = GROUPS.filter(g=>st[g.k]>0).map(g=>g.n[0]+fmt(st[g.k])).join(' ');
+    return `<div class="meal">
+      <div class="meal-head">
+        <h3>${esc(m)}</h3>
+        <span class="sum">${sum}</span>
+        <button class="add" onclick="openPicker(${i})">＋</button>
+      </div>
+      ${items.map(x=>`<div class="entry">
+        <div class="entry-main">
+          <div class="entry-name">${esc(x.e.ad)}</div>
+          <div class="entry-sub">${esc(x.e.olcu||'')}${x.e.qty!==1?` × ${fmt(x.e.qty)}`:''}</div>
+          <div class="pills">${pillsFor(scale(x.e.p,x.e.qty))}</div>
+        </div>
+        <div class="qty">
+          <button onclick="bump(${x.idx},-.5)">−</button>
+          <span>${fmt(x.e.qty)}</span>
+          <button onclick="bump(${x.idx},.5)">＋</button>
+        </div>
+        <button class="del" onclick="removeEntry(${x.idx})">✕</button>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+  const empty = es.length===0
+    ? `<div class="empty">Bugün henüz bir şey eklemedin.<br>Bir öğünün yanındaki ＋ ile başla.</div>` : '';
+  document.getElementById('meals').innerHTML = empty + html;
+}
+function scale(p,q){ const o={}; KEYS.forEach(k=>o[k]=(p[k]||0)*q); return o; }
+
+function bump(i,d){
+  const a=entries().slice();
+  a[i].qty = Math.round((a[i].qty+d)*100)/100;
+  if(a[i].qty<=0) a.splice(i,1);
+  setEntries(a); renderRings(); renderMeals(); haptic();
+}
+function removeEntry(i){
+  const a=entries().slice(); a.splice(i,1);
+  setEntries(a); renderRings(); renderMeals(); haptic();
+}
+
+/* ══════════════ SEÇİCİ ══════════════ */
+function openPicker(meal){ pickMeal = meal==null ? guessMeal() : meal;
+  document.getElementById('addTitle').textContent = S.meals[pickMeal]+' · besin ekle';
+  document.getElementById('q').value=''; renderPickTabs(); renderPicker(); openSheet('sAdd');
+  setTimeout(()=>{ try{document.getElementById('q').focus()}catch(e){} },350);
+}
+function guessMeal(){
+  const h=new Date().getHours();
+  const n=S.meals.length;
+  if(h<10) return 0; if(h<12) return Math.min(1,n-1);
+  if(h<15) return Math.min(2,n-1); if(h<18) return Math.min(3,n-1);
+  if(h<22) return Math.min(4,n-1); return n-1;
+}
+function renderPickTabs(){
+  document.getElementById('pickTabs').innerHTML = CATS.map(c=>
+    `<button class="${c===pickCat?'on':''}" onclick="pickCat='${c}';renderPickTabs();renderPicker()">${c}</button>`).join('');
+}
+function renderPicker(){
+  const q=(document.getElementById('q').value||'').toLocaleLowerCase('tr');
+  let list=allFoods();
+  if(pickCat==='Sık'){
+    list = list.filter(f=>S.freq[f.id]).sort((a,b)=>(S.freq[b.id]||0)-(S.freq[a.id]||0)).slice(0,40);
+  } else if(pickCat!=='Tümü') list=list.filter(f=>f.grup===pickCat);
+  if(q) list=list.filter(f=>f.ad.toLocaleLowerCase('tr').includes(q));
+  if(!q && pickCat!=='Sık'){
+    list = list.slice().sort((a,b)=>(S.freq[b.id]||0)-(S.freq[a.id]||0) || a.ad.localeCompare(b.ad,'tr'));
+  }
+  const el=document.getElementById('pickList');
+  if(!list.length){ el.innerHTML=`<div class="empty">Sonuç yok.<br><button class="btn ghost sm" style="margin-top:12px;max-width:220px;margin-left:auto;margin-right:auto" onclick="newFood('${esc(q)}')">"${esc(q)}" adıyla yeni besin ekle</button></div>`; return; }
+  el.innerHTML = list.map(f=>`<div class="fitem" onclick="addEntry('${f.id}')">
+      <div class="fm">
+        <div class="fn">${esc(f.ad)} <span class="src ${f.kaynak}">${f.kaynak.toUpperCase()}</span>${f.cakisma?'<span class="warnico" title="kaynak çelişkisi">⚠️</span>':''}</div>
+        <div class="fo">${esc(f.olcu)} · ${GROUPS.filter(g=>(f.p[g.k]||0)>0).map(g=>g.n+' '+fmt(f.p[g.k])).join(', ')||'—'}</div>
+      </div>
+      <div class="plus">＋</div>
+    </div>`).join('');
+}
+function addEntry(id){
+  const f=findFood(id); if(!f) return;
+  const a=entries().slice();
+  const ex=a.find(e=>e.id===id && e.meal===pickMeal);
+  if(ex) ex.qty=Math.round((ex.qty+1)*100)/100;
+  else a.push({id:f.id, ad:f.ad, olcu:f.olcu, p:Object.assign({},f.p), qty:1, meal:pickMeal});
+  setEntries(a);
+  S.freq[id]=(S.freq[id]||0)+1; save();
+  renderRings(); renderMeals(); haptic(); toast(f.ad+' eklendi');
+}
+
+/* ══════════════ SHEET ══════════════ */
+let openId=null;
+function openSheet(id){
+  if(id==='sAdd' && pickMeal===null) pickMeal=guessMeal();
+  if(id==='sAdd'){ document.getElementById('addTitle').textContent=S.meals[pickMeal]+' · besin ekle'; renderPickTabs(); renderPicker(); }
+  openId=id;
+  document.getElementById('backdrop').classList.add('on');
+  document.getElementById(id).classList.add('on');
+}
+function closeSheet(){
+  document.getElementById('backdrop').classList.remove('on');
+  ['sAdd','sForm'].forEach(i=>document.getElementById(i).classList.remove('on'));
+  openId=null;
+}
+function form(title, html){
+  document.getElementById('formTitle').textContent=title;
+  document.getElementById('formBody').innerHTML=html;
+  openSheet('sForm');
+}
+
+/* ══════════════ SEKMELER ══════════════ */
+function go(v){
+  ['Day','Hist','Foods','Set'].forEach(x=>{
+    document.getElementById('v'+x).classList.toggle('hidden', x!==v);
+    document.getElementById('n'+x).classList.toggle('on', x===v);
+  });
+  document.getElementById('fab').classList.toggle('hidden', v!=='Day');
+  if(v==='Hist') renderHist();
+  if(v==='Foods'){ renderFdbTabs(); renderFoodDb(); }
+  if(v==='Set') renderSettings();
+  window.scrollTo(0,0);
+}
+
+/* ══════════════ GEÇMİŞ ══════════════ */
+function renderHist(){
+  const L=prof().limits;
+  const d=new Date(), dow=(d.getDay()+6)%7;
+  const mon=new Date(d); mon.setDate(d.getDate()-dow);
+  let wk='<div class="wk">';
+  for(let i=0;i<7;i++){
+    const dd=new Date(mon); dd.setDate(mon.getDate()+i);
+    const ds=todayStr(dd), e=S.log[logKey(S.active,ds)];
+    const t=e?totals(e):null;
+    const okc = t ? GROUPS.filter(g=>!g.goal).every(g=>t[g.k]<=L[g.k]+.001) : null;
+    wk+=`<div>${GUN2[dd.getDay()]}<b style="color:${t?(okc?'var(--ok)':'var(--over)'):'var(--line)'}">${t?(okc?'✓':'!'):'·'}</b></div>`;
+  }
+  wk+='</div>';
+  const et = Object.keys(S.log).filter(k=>k.startsWith(S.active+'|'))
+    .filter(k=>{const ds=k.split('|')[1]; return parseD(ds)>=mon;})
+    .reduce((a,k)=>{ S.log[k].forEach(e=>{ a.kirmizi += /Et$|Köfte|Karnıyarık|Biber Dolması|Mantı|Kuru Fasulye/.test(e.ad)&&e.p.et>0 ? e.qty:0;
+      a.beyaz += /Tavuk|Balık|Hindi/.test(e.ad) ? e.qty:0; }); return a; },{kirmizi:0,beyaz:0});
+  document.getElementById('weekCard').innerHTML = wk + `
+    <div style="margin-top:12px;font-size:13px;line-height:1.9">
+      <div style="display:flex;justify-content:space-between"><span>Kırmızı et <small style="color:var(--muted)">(hedef 1-2/hafta)</small></span><b>${fmt(et.kirmizi)}</b></div>
+      <div style="display:flex;justify-content:space-between"><span>Beyaz et <small style="color:var(--muted)">(hedef 2-3/hafta)</small></span><b>${fmt(et.beyaz)}</b></div>
+    </div>
+    <p class="note" style="margin-bottom:0">✓ = tüm limitler içinde kalınmış gün. Kırmızı/beyaz et sayımı besin adına göre
+    tahmin edilir, yaklaşıktır.</p>`;
+
+  const keys = Object.keys(S.log).filter(k=>k.startsWith(S.active+'|'))
+    .map(k=>k.split('|')[1]).sort().reverse().slice(0,30);
+  document.getElementById('histList').innerHTML = keys.length ? keys.map(ds=>{
+    const t=totals(S.log[logKey(S.active,ds)]);
+    return `<div class="hday" onclick="day='${ds}';go('Day');renderAll()">
+      <div class="hd">${dateLabel(ds)}</div>
+      <div class="hmini">${GROUPS.map(g=>{
+        const lim=L[g.k]||1, pct=Math.min(t[g.k]/lim,1);
+        const over=!g.goal&&t[g.k]>lim+.001;
+        return `<i class="${t[g.k]>0?'f':''}" style="background:${over?'var(--over)':g.c};height:${6+16*pct}px;align-self:flex-end"></i>`;
+      }).join('')}</div>
+      <span style="color:var(--muted)">›</span>
+    </div>`;
+  }).join('') : '<div class="empty">Henüz kayıt yok.</div>';
+}
+
+/* ══════════════ BESİN VERİTABANI ══════════════ */
+function renderFdbTabs(){
+  document.getElementById('fdbTabs').innerHTML = CATS.filter(c=>c!=='Sık').map(c=>
+    `<button class="${c===fdbCat?'on':''}" onclick="fdbCat='${c}';renderFdbTabs();renderFoodDb()">${c}</button>`).join('');
+}
+function renderFoodDb(){
+  const q=(document.getElementById('fdbSearch').value||'').toLocaleLowerCase('tr');
+  let list=allFoods();
+  if(fdbCat!=='Tümü') list=list.filter(f=>f.grup===fdbCat);
+  if(q) list=list.filter(f=>f.ad.toLocaleLowerCase('tr').includes(q));
+  list.sort((a,b)=>a.ad.localeCompare(b.ad,'tr'));
+  document.getElementById('fdbList').innerHTML = list.length? list.map(f=>`
+    <div class="fitem" onclick="editFood('${f.id}')">
+      <div class="fm">
+        <div class="fn">${esc(f.ad)} <span class="src ${f.kaynak}">${f.kaynak.toUpperCase()}</span>${f.cakisma?'<span class="warnico">⚠️</span>':''}</div>
+        <div class="fo">${esc(f.olcu)} · ${GROUPS.filter(g=>(f.p[g.k]||0)>0).map(g=>g.n+' '+fmt(f.p[g.k])).join(', ')||'—'}</div>
+        ${f.not?`<div class="fo" style="font-style:italic">${esc(f.not)}</div>`:''}
+        ${f.cakisma?`<div class="fo" style="color:#a07a2a">⚠️ ${esc(f.cakisma)}</div>`:''}
+      </div>
+      <span style="color:var(--muted)">›</span>
+    </div>`).join('') : '<div class="empty">Sonuç yok.</div>';
+}
+function foodForm(f, isNew){
+  const p=f.p||{};
+  return `
+  <label class="f"><span>Besin adı</span><input id="ff_ad" value="${esc(f.ad||'')}" placeholder="ör. Kaşarlı Tost"></label>
+  <label class="f"><span>Ölçü / porsiyon açıklaması</span><input id="ff_olcu" value="${esc(f.olcu||'')}" placeholder="ör. 1 adet, 4 yemek kaşığı"></label>
+  <label class="f"><span>Grup</span><select id="ff_grup">${['Tahıl','Et','Süt','Meyve','Yağ','Sebze','Karma'].map(g=>`<option ${f.grup===g?'selected':''}>${g}</option>`).join('')}</select></label>
+  <span style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:600">Kaç birim sayılsın?</span>
+  <div class="grid5">${GROUPS.map(g=>`<label class="f"><span style="text-align:center;color:${g.c}">${g.n}</span>
+    <input id="ff_${g.k}" type="number" inputmode="decimal" step="0.5" min="0" value="${p[g.k]||0}"></label>`).join('')}</div>
+  <label class="f" style="margin-top:11px"><span>Not (isteğe bağlı)</span><input id="ff_not" value="${esc(f.not||'')}"></label>
+  <button class="btn" onclick="saveFood('${f.id||''}',${isNew?1:0})">Kaydet</button>
+  ${!isNew?`<div style="height:8px"></div><button class="btn danger sm" onclick="delFood('${f.id}')">Listeden kaldır</button>`:''}
+  ${!isNew&&f.kaynak!=='ozel'?`<p class="note">Bu besin hazır listeden geliyor. Değiştirirsen senin değerin kullanılır; istersen "Kaydet"le düzeltebilirsin.</p>`:''}
+  `;
+}
+function newFood(ad){ form('Yeni besin', foodForm({ad:ad||'',olcu:'',grup:'Karma',p:{}}, true)); }
+function editFood(id){ const f=findFood(id); if(f) form(f.ad, foodForm(f,false)); }
+function saveFood(id,isNew){
+  const g=k=>parseFloat(document.getElementById('ff_'+k).value)||0;
+  const ad=document.getElementById('ff_ad').value.trim();
+  if(!ad){ toast('Besin adı gerekli'); return; }
+  const p={}; KEYS.forEach(k=>p[k]=g(k));
+  const obj={ ad, olcu:document.getElementById('ff_olcu').value.trim()||'1 porsiyon',
+    grup:document.getElementById('ff_grup').value, p, not:document.getElementById('ff_not').value.trim() };
+  if(isNew || !id){
+    obj.id='c'+Date.now(); obj.kaynak='ozel'; S.custom.push(obj);
+  } else if(id.startsWith('c')){
+    const i=S.custom.findIndex(f=>f.id===id);
+    S.custom[i]=Object.assign(S.custom[i],obj);
+  } else {
+    S.overrides[id]=obj;
+  }
+  save(); closeSheet(); renderFoodDb(); toast('Kaydedildi');
+}
+function delFood(id){
+  if(!confirm('Bu besin listeden kaldırılsın mı? Geçmiş kayıtların etkilenmez.')) return;
+  if(id.startsWith('c')) S.custom=S.custom.filter(f=>f.id!==id);
+  else { S.hidden.push(id); delete S.overrides[id]; }
+  save(); closeSheet(); renderFoodDb(); toast('Kaldırıldı');
+}
+
+/* ══════════════ AYARLAR ══════════════ */
+function renderSettings(){
+  document.getElementById('setProfiles').innerHTML = S.profiles.map((p,i)=>`
+    <div class="card">
+      <label class="f"><span>Ad</span><input value="${esc(p.ad)}" oninput="S.profiles[${i}].ad=this.value;save();renderProfiles()"></label>
+      <span style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:600">Günlük limitler</span>
+      <div class="grid5">${GROUPS.map(g=>`<label class="f"><span style="text-align:center;color:${g.c}">${g.n}</span>
+        <input type="number" inputmode="decimal" step="0.5" min="0" value="${p.limits[g.k]}"
+          oninput="S.profiles[${i}].limits.${g.k}=parseFloat(this.value)||0;save();if(S.active==='${p.id}')renderRings()"></label>`).join('')}</div>
+      <p class="note" style="margin-bottom:0">Formül sırası: Tahıl–Et–Süt–Meyve (${p.limits.tahil}${p.limits.et}${p.limits.sut}${p.limits.meyve}).
+      Yağ formüle dahil değildir, Ayça Kaya her yaş ve cinsiyette 3 birimle sınırlar. Sebze bir üst limit değil,
+      ulaşılması iyi olan bir <b>hedeftir</b>.</p>
+    </div>`).join('') +
+    (S.profiles.length<4?`<button class="btn ghost sm" onclick="addProf()">＋ Profil ekle</button>`:'');
+  document.getElementById('mealNames').innerHTML = S.meals.map((m,i)=>`
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input style="flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg)"
+        value="${esc(m)}" oninput="S.meals[${i}]=this.value;save()">
+      ${S.meals.length>1?`<button class="del" onclick="delMeal(${i})">✕</button>`:''}
+    </div>`).join('');
+}
+function addProf(){ S.profiles.push({id:'p'+Date.now(), ad:'Yeni profil', limits:{tahil:5,et:3,sut:3,meyve:3,yag:3,sebze:4}}); save(); renderSettings(); renderProfiles(); }
+function addMeal(){ S.meals.push('Yeni öğün'); save(); renderSettings(); renderMeals(); }
+function delMeal(i){
+  if(!confirm('Bu öğün silinsin mi? İçindeki kayıtlar bir önceki öğüne taşınır.')) return;
+  Object.values(S.log).forEach(a=>a.forEach(e=>{ if(e.meal===i) e.meal=Math.max(0,i-1); else if(e.meal>i) e.meal--; }));
+  S.meals.splice(i,1); save(); renderSettings(); renderMeals();
+}
+function doExport(){
+  const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='sayarak-yedek-'+todayStr()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('Yedek indirildi');
+}
+function doImport(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    const d=JSON.parse(r.result);
+    if(!d.profiles||!d.log) throw 0;
+    if(!confirm('Mevcut veriler bu yedekle değiştirilecek. Devam?')) return;
+    S=Object.assign(clone(DEFAULTS),d); save(); renderAll(); go('Day'); toast('Yedek yüklendi');
+  }catch(e){ toast('Dosya okunamadı'); } };
+  r.readAsText(f); inp.value='';
+}
+function wipe(){
+  if(!confirm('TÜM kayıtlar ve ayarlar silinecek. Emin misin?')) return;
+  if(!confirm('Son onay: geri alınamaz.')) return;
+  localStorage.removeItem(LS); S=clone(DEFAULTS); day=todayStr();
+  renderAll(); go('Day'); toast('Silindi');
+}
+
+/* ══════════════ BAŞLAT ══════════════ */
+(function storageCheck(){
+  let ok=false;
+  try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); ok=true; }catch(e){}
+  if(!ok){
+    const b=document.createElement('div');
+    b.style.cssText='position:fixed;left:8px;right:8px;top:calc(8px + var(--safe-t));z-index:999;'+
+      'background:#b8503f;color:#fff;padding:11px 13px;border-radius:12px;font-size:13px;line-height:1.5;'+
+      'box-shadow:0 4px 16px rgba(0,0,0,.25)';
+    b.innerHTML='<b>Kayıt yapılamıyor.</b> Bu sayfa dosyadan (file://) veya gizli sekmede açılmış olabilir. '+
+      'Verilerin saklanması için sayfayı bir adresten (ör. GitHub Pages) açıp <b>Ana Ekrana Ekle</b> yap. '+
+      '<span style="text-decoration:underline" onclick="this.closest(\'div\').remove()">Kapat</span>';
+    document.body.appendChild(b);
+  }
+})();
+renderAll();
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && day!==todayStr() && parseD(day)<parseD(todayStr())){ /* gün değişimini zorlama */ } });
+window.addEventListener('pageshow',()=>{ renderDate(); });
+</script>
+</body>
+</html>
